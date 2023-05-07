@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33122.133
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VkIntern.API", "VkIntern.API\VkIntern.API.csproj", "{108FA7D3-37BF-4533-B265-E0D3C9308A67}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VkIntern.Tests", "VkIntern.Tests\VkIntern.Tests.csproj", "{A937A0FB-2C08-4CFF-A534-5964596CCF35}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{108FA7D3-37BF-4533-B265-E0D3C9308A67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{108FA7D3-37BF-4533-B265-E0D3C9308A67}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{108FA7D3-37BF-4533-B265-E0D3C9308A67}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{108FA7D3-37BF-4533-B265-E0D3C9308A67}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A937A0FB-2C08-4CFF-A534-5964596CCF35}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A937A0FB-2C08-4CFF-A534-5964596CCF35}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A937A0FB-2C08-4CFF-A534-5964596CCF35}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A937A0FB-2C08-4CFF-A534-5964596CCF35}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FF2C61ED-0E3C-4EB8-973F-2D78B3E42D70}
+	EndGlobalSection
+EndGlobal
