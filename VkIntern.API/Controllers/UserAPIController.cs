@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using VkIntern.API.Models.Dtos;
 using VkIntern.API.Repository;
 

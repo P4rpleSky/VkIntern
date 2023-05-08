@@ -7,89 +7,71 @@ namespace VkIntern.API.DbContexts;
 
 public partial class ApplicationDbContext : DbContext
 {
-    public ApplicationDbContext()
-    {
-    }
-
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options)
-    {
-    }
-
-    public virtual DbSet<User> Users { get; set; }
+	public virtual DbSet<User> Users { get; set; }
 
     public virtual DbSet<UserGroup> UserGroups { get; set; }
 
     public virtual DbSet<UserState> UserStates { get; set; }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<User>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("user_pkey");
+	public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+	{
 
-            entity.ToTable("user");
+	}
 
-            entity.HasIndex(e => e.Login, "user_login_key").IsUnique();
+	protected override void OnModelCreating(ModelBuilder modelBuilder)
+	{
+		modelBuilder.Entity<UserGroup>().HasData(new UserGroup
+		{
+			Id = 1,
+			Code = "Admin",
+			Description = "I am admin!"
+		});
+		modelBuilder.Entity<UserGroup>().HasData(new UserGroup
+		{
+			Id = 2,
+			Code = "User",
+			Description = "I am default user!"
+		});
 
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.CreatedDate).HasColumnName("created_date");
-            entity.Property(e => e.Login)
-                .HasMaxLength(16)
-                .HasColumnName("login");
-            entity.Property(e => e.Password)
-                .HasMaxLength(16)
-                .HasColumnName("password");
-            entity.Property(e => e.UserGroupId).HasColumnName("user_group_id");
-            entity.Property(e => e.UserStateId).HasColumnName("user_state_id");
+		modelBuilder.Entity<UserState>().HasData(new UserState
+		{
+			Id = 1,
+			Code = "Active",
+			Description = "This user is active!"
+		});
+		modelBuilder.Entity<UserState>().HasData(new UserState
+		{
+			Id = 2,
+			Code = "Blocked",
+			Description = "This user is blocked!"
+		});
 
-            entity.HasOne(d => d.UserGroup).WithMany(p => p.Users)
-                .HasForeignKey(d => d.UserGroupId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_user_group_id");
-
-            entity.HasOne(d => d.UserState).WithMany(p => p.Users)
-                .HasForeignKey(d => d.UserStateId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_user_state_id");
-        });
-
-        modelBuilder.Entity<UserGroup>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("user_group_pkey");
-
-            entity.ToTable("user_group");
-
-            entity.HasIndex(e => e.Code, "user_group_code_key").IsUnique();
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Code)
-                .HasMaxLength(16)
-                .HasColumnName("code");
-            entity.Property(e => e.Description)
-                .HasMaxLength(128)
-                .HasColumnName("description");
-        });
-
-        modelBuilder.Entity<UserState>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("user_state_pkey");
-
-            entity.ToTable("user_state");
-
-            entity.HasIndex(e => e.Code, "user_state_code_key").IsUnique();
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Code)
-                .HasMaxLength(16)
-                .HasColumnName("code");
-            entity.Property(e => e.Description)
-                .HasMaxLength(128)
-                .HasColumnName("description");
-        });
-
-        OnModelCreatingPartial(modelBuilder);
-    }
-
-    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+		modelBuilder.Entity<User>().HasData(new User
+		{
+			Id = 1,
+			Login = "admin",
+			Password = "admin123",
+			CreatedDate = DateOnly.FromDateTime(DateTime.UtcNow),
+			UserGroupId = 1,
+			UserStateId = 1
+		});
+		modelBuilder.Entity<User>().HasData(new User
+		{
+			Id = 2,
+			Login = "Alex",
+			Password = "778877",
+			CreatedDate = DateOnly.FromDateTime(DateTime.UtcNow),
+			UserGroupId = 2,
+			UserStateId = 1
+		});
+		modelBuilder.Entity<User>().HasData(new User
+		{
+			Id = 3,
+			Login = "Jon",
+			Password = "11231",
+			CreatedDate = DateOnly.FromDateTime(DateTime.UtcNow),
+			UserGroupId = 2,
+			UserStateId = 2
+		});
+	}
 }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace VkIntern.Xunit
+namespace VkIntern.Tests
 {
 	public static class Extensions
 	{

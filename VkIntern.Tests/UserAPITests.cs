@@ -16,145 +16,12 @@ using VkIntern.API.DbContexts;
 using VkIntern.API.Models;
 using VkIntern.API.Models.Dtos;
 using VkIntern.API.Repository;
+using VkIntern.Tests;
 
-namespace VkIntern.Xunit
+namespace VkIntern.Tests
 {
 	public class UserAPITests
 	{
-		private static List<UserGroup> GetUserGroups()
-			=> new List<UserGroup>
-			{
-				new UserGroup
-				{
-					Id = 1,
-					Code = "Admin",
-					Description = "Admin in fake db!"
-				},
-				new UserGroup
-				{
-					Id= 2,
-					Code = "User",
-					Description = "User in fake db!"
-				}
-			};
-
-		private static List<UserState> GetUserStates()
-			=> new List<UserState>
-			{
-				new UserState
-				{
-					Id = 1,
-					Code = "Active",
-					Description = "This user is active in fake db!"
-				},
-				new UserState
-				{
-					Id= 2,
-					Code = "Blocked",
-					Description = "This user is blocked in fake db!"
-				}
-			};
-
-		private static List<User> GetUsers()
-			=> new List<User>
-			{
-				new User
-				{
-					Id = 1,
-					Login = "admin",
-					Password = "admin123",
-					CreatedDate = DateOnly.FromDateTime(DateTime.UtcNow),
-					UserGroupId = 1,
-					UserStateId = 1
-				},
-				new User
-				{
-					Id = 2,
-					Login = "Alex",
-					Password = "332323",
-					CreatedDate = DateOnly.FromDateTime(DateTime.UtcNow),
-					UserGroupId = 2,
-					UserStateId = 1
-				},
-				new User
-				{
-					Id = 3,
-					Login = "Jon",
-					Password = "11231",
-					CreatedDate = DateOnly.FromDateTime(DateTime.UtcNow),
-					UserGroupId = 2,
-					UserStateId = 2
-				}
-			};
-
-		private static UserAPIController GetControllerMock()
-		{
-			var userGroupsList = GetUserGroups().AsQueryable();
-			var userGroupsMock = new Mock<DbSet<UserGroup>>();
-			userGroupsMock.As<IDbAsyncEnumerable<UserGroup>>()
-				.Setup(m => m.GetAsyncEnumerator())
-				.Returns(new TestDbAsyncEnumerator<UserGroup>(userGroupsList.GetEnumerator()));
-			userGroupsMock.As<IQueryable<UserGroup>>()
-				.Setup(m => m.Provider)
-				.Returns(new TestDbAsyncQueryProvider<UserGroup>(userGroupsList.Provider));
-			userGroupsMock.As<IQueryable<UserGroup>>()
-				.Setup(m => m.Expression)
-				.Returns(userGroupsList.Expression);
-			userGroupsMock.As<IQueryable<UserGroup>>()
-				.Setup(m => m.ElementType)
-				.Returns(userGroupsList.ElementType);
-			userGroupsMock.As<IQueryable<UserGroup>>()
-				.Setup(m => m.GetEnumerator())
-				.Returns(() => userGroupsList.GetEnumerator());
-
-			var userStatesList = GetUserStates().AsQueryable();
-			var userStatesMock = new Mock<DbSet<UserState>>();
-			userStatesMock.As<IDbAsyncEnumerable<UserState>>()
-				.Setup(m => m.GetAsyncEnumerator())
-				.Returns(new TestDbAsyncEnumerator<UserState>(userStatesList.GetEnumerator()));
-			userStatesMock.As<IQueryable<UserState>>()
-				.Setup(m => m.Provider)
-				.Returns(new TestDbAsyncQueryProvider<UserState>(userStatesList.Provider));
-			userStatesMock.As<IQueryable<UserState>>()
-				.Setup(m => m.Expression)
-				.Returns(userStatesList.Expression);
-			userStatesMock.As<IQueryable<UserState>>()
-				.Setup(m => m.ElementType)
-				.Returns(userStatesList.ElementType);
-			userStatesMock.As<IQueryable<UserState>>()
-				.Setup(m => m.GetEnumerator())
-				.Returns(() => userStatesList.GetEnumerator());
-
-			var usersList = GetUsers().AsQueryable();
-			var usersMock = new Mock<DbSet<User>>();
-			usersMock.As<IDbAsyncEnumerable<User>>()
-				.Setup(m => m.GetAsyncEnumerator())
-				.Returns(new TestDbAsyncEnumerator<User>(usersList.GetEnumerator()));
-			usersMock.As<IQueryable<User>>()
-				.Setup(m => m.Provider)
-				.Returns(new TestDbAsyncQueryProvider<User>(usersList.Provider));
-			usersMock.As<IQueryable<User>>()
-				.Setup(m => m.Expression)
-				.Returns(usersList.Expression);
-			usersMock.As<IQueryable<User>>()
-				.Setup(m => m.ElementType)
-				.Returns(usersList.ElementType);
-			usersMock.As<IQueryable<User>>()
-				.Setup(m => m.GetEnumerator())
-				.Returns(() => usersList.GetEnumerator());
-
-			var dbContextMock = new Mock<ApplicationDbContext>();
-			dbContextMock.Setup(c => c.UserGroups).Returns(userGroupsMock.Object);
-			dbContextMock.Setup(c => c.UserStates).Returns(userStatesMock.Object);
-			dbContextMock.Setup(c => c.Users).Returns(usersMock.Object);
-
-			IMapper mapper = MappingConfig.RegisterMaps().CreateMapper();
-			var userRepository = new UserRepository(mapper, dbContextMock.Object);
-			var userApiController = new UserAPIController(userRepository);
-
-			return userApiController;
-		}
-
 		private static Tuple<string, string, string> ParseSummary(
 			List<UserSummaryDto> usersSummary)
 		{
@@ -182,7 +49,19 @@ namespace VkIntern.Xunit
 					Password = x.Password,
 					CreatedDate = x.CreatedDate,
 					UserGroupId = x.UserGroupId,
-					UserStateId = x.UserStateId
+					UserGroup = new UserGroup
+					{
+						Id = x.UserGroupId,
+						Code = x.UserGroupCode,
+						Description = x.UserGroupDescription
+					},
+					UserStateId = x.UserStateId,
+					UserState = new UserState
+					{
+						Id = x.UserStateId,
+						Code = x.UserStateCode,
+						Description = x.UserStateDescription
+					}
 				}).ToList());
 
 			return Tuple.Create(actualUserGroups, actualUserStates, actualUsers);
@@ -207,10 +86,11 @@ namespace VkIntern.Xunit
 		}
 
 		[Fact]
-		public async void GetAllUsersInfoWorks()
+		public async Task GetAllUsersInfoWorks()
 		{
-			var controller = GetControllerMock();
-			var response = await controller.Get();
+			var emulator = new ControllerEmulator();
+			
+			var response = await emulator.Controller.Get();
 
 			var usersSummaryList = (List<UserSummaryDto>)response.Result;
 
@@ -220,9 +100,9 @@ namespace VkIntern.Xunit
 			var actualUserStates = jsonTuple.Item2;
 			var actualUsers = jsonTuple.Item3;
 
-			var expectedUsers = JsonConvert.SerializeObject(GetUsers());
-			var expectedUserStates = JsonConvert.SerializeObject(GetUserStates());
-			var expectedUserGroups = JsonConvert.SerializeObject(GetUserGroups());
+			var expectedUsers = JsonConvert.SerializeObject(emulator.DbContext.Users);
+			var expectedUserStates = JsonConvert.SerializeObject(emulator.DbContext.UserStates);
+			var expectedUserGroups = JsonConvert.SerializeObject(emulator.DbContext.UserGroups);
 
 			Assert.Equal(expectedUsers, actualUsers);
 			Assert.Equal(expectedUserStates, actualUserStates);
@@ -236,10 +116,11 @@ namespace VkIntern.Xunit
 		[InlineData(1, 1)]
 		[InlineData(5, 0)]
 		[InlineData(3444, 21221)]
-		public async void GetAllUsersInfoWithLimitAndOffsetWorksWithCorrectInput(int limit, int offset)
+		public async Task PaginationWorksWithCorrectInput(int limit, int offset)
 		{
-			var controller = GetControllerMock();
-			var response = await controller.Get(limit, offset);
+			var emulator = new ControllerEmulator();
+
+			var response = await emulator.Controller.Get(limit, offset);
 
 			var usersSummaryList = (List<UserSummaryDto>)response.Result;
 
@@ -253,7 +134,7 @@ namespace VkIntern.Xunit
 				offset++;
 			var idsRange = Enumerable.Range(offset, limit).ToHashSet();
 
-			var expectedUsersList = GetUsers()
+			var expectedUsersList = emulator.DbContext.Users
 				.Where(x => idsRange.Contains(x.Id))
 				.OrderBy(x => x.Id)
 				.ToList();
@@ -266,15 +147,16 @@ namespace VkIntern.Xunit
 
 			var expectedUsers = JsonConvert.SerializeObject(expectedUsersList);
 			var expectedUserStates = JsonConvert.SerializeObject(
-				GetUserStates()
+				emulator.DbContext.UserStates
 				.Where(x => expectedUserStateIds.Contains(x.Id))
 				.OrderBy(x => x.Id)
 				.ToList());
 			var expectedUserGroups = JsonConvert.SerializeObject(
-				GetUserGroups()
+				emulator.DbContext.UserGroups
 				.Where(x => expectedUserGroupIds.Contains(x.Id))
 				.OrderBy(x => x.Id)
 				.ToList());
+
 
 			Assert.Equal(expectedUsers, actualUsers);
 			Assert.Equal(expectedUserStates, actualUserStates);
@@ -286,37 +168,97 @@ namespace VkIntern.Xunit
 		[InlineData(-2, 4)]
 		[InlineData(-100, -8)]
 		[InlineData(2, -3)]
-		public async void GetAllUsersInfoWithLimitAndOffsetFailsWithIncorrectInput(int limit, int offset)
+		public async Task PaginationFailsWithIncorrectInput(int limit, int offset)
 		{
-			var controller = GetControllerMock();
-			var response = await controller.Get(limit, offset);
+			var emulator = new ControllerEmulator();
 
+			var response = await emulator.Controller.Get(limit, offset);
 			Assert.True(response.ErrorMessages.Count > 0 && response.Result == null);
 		}
 
 		[Fact]
-		public async void GetUsersInfoByIdWorksWithIncorrectInput()
+		public async Task GetUsersInfoByIdWorksWithCorrectInput()
 		{
-			var controller = GetControllerMock();
+			var emulator = new ControllerEmulator();
 
-			for (int id = 1; id <= GetUsers().Count; id++)
+			for (int id = 1; id <= emulator.DbContext.Users.Count(); id++)
 			{
-				var response = await controller.Get(id);
-				var userSummary = (List<UserSummaryDto>)response.Result;
+				var response = await emulator.Controller.Get(id);
+				var userSummary = new List<UserSummaryDto> { (UserSummaryDto)response.Result };
 				var jsonTuple = ParseSummary(userSummary);
 
 				var actualUserGroup = jsonTuple.Item1;
 				var actualUserState = jsonTuple.Item2;
 				var actualUser = jsonTuple.Item3;
 
-				var expectedUser = GetUsers().FirstOrDefault(x => x.Id == id);
-				var expectedUserState = GetUserStates().FirstOrDefault(x => x.Id == expectedUser.UserStateId);
-				var expectedUserGroup = GetUserGroups().FirstOrDefault(x => x.Id == expectedUser.UserGroupId);
+				var expectedUser = emulator.DbContext.Users.Where(x => x.Id == id).ToList();
+				var expectedUserState = emulator.DbContext.UserStates.Where(x => x.Id == expectedUser[0].UserStateId).ToList();
+				var expectedUserGroup = emulator.DbContext.UserGroups.Where(x => x.Id == expectedUser[0].UserGroupId).ToList();
 
 				Assert.Equal(JsonConvert.SerializeObject(expectedUser), actualUser);
 				Assert.Equal(JsonConvert.SerializeObject(expectedUserState), actualUserState);
 				Assert.Equal(JsonConvert.SerializeObject(expectedUserGroup), actualUserGroup);
 			}
 		}
+
+		[Fact]
+		public async Task GetUsersInfoByIdFailsWithIncorrectInput()
+		{
+			var emulator = new ControllerEmulator();
+
+			var trueRange = Enumerable.Range(1, emulator.DbContext.Users.Count()).ToHashSet();
+			var falseRange = new List<int>();
+			Random rnd = new Random();
+			for (int i = 0; i < 1000; i++)
+				falseRange.Add(rnd.Next(-100000, 200000));
+
+			falseRange = falseRange.Where(x => !trueRange.Contains(x)).ToList();
+			for (int i = 0; i < falseRange.Count; i++)
+			{
+				int id = falseRange[i];
+				var response = await emulator.Controller.Get(id);
+				Assert.True(response.ErrorMessages.Count > 0 && response.Result == null);
+			}
+		}
+
+		[Fact]
+		public async Task DeleteUserByIdWorksWithCorrectInput()
+		{
+			var emulator = new ControllerEmulator();
+
+			var idsToDelete = emulator.DbContext.Users.Where(x =>
+				x.UserStateId == emulator.DbContext.UserStates.Where(x => x.Code == "Active").First().Id)
+				.Select(x => x.Id)
+				.ToList();
+			var blockedStateId = emulator.DbContext.UserStates.Where(x => x.Code == "Blocked").First().Id;
+			foreach (var id in idsToDelete)
+			{
+				var response1 = await emulator.Controller.Delete(id);
+				var response2 = (UserSummaryDto)(await emulator.Controller.Get(id)).Result;
+				Assert.Equal(blockedStateId, response2.UserStateId);
+			}
+		}
+
+		[Fact]
+		public async void DeleteUserByIdFailsWithIncorrectInput()
+		{
+			var emulator = new ControllerEmulator();
+
+			var trueRange = Enumerable.Range(1, emulator.DbContext.Users.Count()).ToHashSet();
+			var falseRange = new List<int>();
+			Random rnd = new Random();
+			for (int i = 0; i < 1000; i++)
+				falseRange.Add(rnd.Next(-100000, 200000));
+
+			falseRange = falseRange.Where(x => !trueRange.Contains(x)).ToList();
+			for (int i = 0; i < falseRange.Count; i++)
+			{
+				int id = falseRange[i];
+				var response = await emulator.Controller.Get(id);
+				Assert.True(response.ErrorMessages.Count > 0 && response.Result == null);
+			}
+		}
+
+		
 	}
 }
