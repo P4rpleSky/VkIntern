@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,6 +20,14 @@ namespace VkIntern.Tests
 					yield return element;
 				}
 			}
+		}
+
+		public static string SerializeToJSON(this object? objToSerialize)
+		{
+			return JsonConvert.SerializeObject(objToSerialize, new JsonSerializerSettings()
+			{
+				//ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+			});
 		}
 	}
 }

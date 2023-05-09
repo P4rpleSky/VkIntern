@@ -25,8 +25,10 @@ namespace VkIntern.API.Repository
 			}
 
 			var adminGroupCode = "Admin";
-			if (userDto.UserGroupCode == adminGroupCode && 
-				_db.GetUsersSummary().Where(x => x.UserGroup.Code == adminGroupCode).Any())
+			if (userDto.UserGroupCode == adminGroupCode &&
+				_db.GetUsersSummary()
+				.Where(x => x.UserGroup.Code == adminGroupCode && x.UserState.Code == "Active")
+				.Any())
 			{
 				throw new Exception("Cannot add another admin!");
 			}
@@ -34,16 +36,11 @@ namespace VkIntern.API.Repository
 			var user = _mapper.Map<UserDto, User>(userDto);
 
 			var activeStateCode = "Active";
-			var activeUserState = await _db.UserStates.FirstOrDefaultAsync(x => x.Code == activeStateCode);
-			if (activeUserState == null)
-				throw new Exception($"User state with code \"{activeStateCode}\" is not defined!");
+			var activeUserState = await _db.UserStates.FirstAsync(x => x.Code == activeStateCode);
 			user.UserStateId = activeUserState.Id;
 
-			var userGroup = await _db.UserGroups.FirstOrDefaultAsync(x => x.Code == userDto.UserGroupCode);
-			if (userGroup == null)
-				throw new Exception($"User group with code \"{userDto.UserGroupCode}\" is not defined!");
+			var userGroup = await _db.UserGroups.FirstAsync(x => x.Code == userDto.UserGroupCode);
 			user.UserGroupId = userGroup.Id;
-
 			user.CreatedDate = DateOnly.FromDateTime(DateTime.UtcNow);
 
 			_db.Users.Add(user);
@@ -53,15 +50,16 @@ namespace VkIntern.API.Repository
 
 		public async Task<bool> DeleteUserAsync(int userId)
 		{
-			var user = await _db.Users.FirstOrDefaultAsync(x => x.Id == userId);
-			if (user == null)
+			var blockedStateCode = "Blocked"; 
+			var fullUserInfo = await _db.GetUsersSummary().FirstOrDefaultAsync(x => x.Id == userId);
+			if (fullUserInfo == null)
 				throw new IndexOutOfRangeException($"User with id {userId} is not exists!");
+			else if (fullUserInfo.UserState.Code == blockedStateCode)
+				throw new IndexOutOfRangeException($"User with id {userId} is already deleted!");
 
-			var blockedStateCode = "Blocked";
-			var blockedUserState = await _db.UserStates.FirstOrDefaultAsync(x => x.Code == blockedStateCode);
-			if (blockedUserState == null)
-				throw new Exception($"User state with code \"{blockedStateCode}\" is not defined!");
+			var blockedUserState = await _db.UserStates.FirstAsync(x => x.Code == blockedStateCode);
 
+			var user = await _db.Users.FirstAsync(x => x.Id == userId);
 			user.UserStateId = blockedUserState.Id;
 			await _db.SaveChangesAsync();
 
@@ -79,7 +77,7 @@ namespace VkIntern.API.Repository
 
 		public async Task<IEnumerable<UserSummaryDto>> GetUsersInfoAsync()
 		{
-			var usersInfoList = await _db.GetUsersSummary().ToListAsync();
+			var usersInfoList = await _db.GetUsersSummary().OrderBy(x => x.Id).ToListAsync();
 			return _mapper.Map<List<UserSummaryDto>>(usersInfoList);
 		}
 
