@@ -344,6 +344,7 @@ namespace VkIntern.Tests
 			var newUserId = emulator.DbContext.Users.Count();
 			var responseOnGet = await emulator.Controller.Get(newUserId);
 			var userSummary = responseOnGet.Result as UserSummaryDto;
+			Assert.NotNull(userSummary);
 
 			var usersSummary = new List<UserSummaryDto> { userSummary };
 			var (actualUserGroup, actualUserState, actualUser) = ParseUserSummaryList(usersSummary);
@@ -417,6 +418,7 @@ namespace VkIntern.Tests
 			var newUserId = emulator.DbContext.Users.Count();
 			var responseOnGet = await emulator.Controller.Get(newUserId);
 			var userSummary = responseOnGet.Result as UserSummaryDto;
+			Assert.NotNull(userSummary);
 
 			var usersSummary = new List<UserSummaryDto> { userSummary };
 			var (actualUserGroup, actualUserState, actualUser) = ParseUserSummaryList(usersSummary);
@@ -466,6 +468,7 @@ namespace VkIntern.Tests
 			var newUserId = emulator.DbContext.Users.Count();
 			var responseOnGet = await emulator.Controller.Get(newUserId);
 			var userSummary = responseOnGet.Result as UserSummaryDto;
+			Assert.NotNull(userSummary);
 
 			var usersSummary = new List<UserSummaryDto> { userSummary };
 			var (actualUserGroup, actualUserState, actualUser) = ParseUserSummaryList(usersSummary);

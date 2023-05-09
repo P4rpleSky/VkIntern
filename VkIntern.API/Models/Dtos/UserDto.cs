@@ -2,9 +2,9 @@
 {
     public class UserDto
     {
-		public string? Login { get; set; }
+		public string Login { get; set; } = null!;
 
-		public string? Password { get; set; }
+		public string Password { get; set; } = null!;
 
 		public string UserGroupCode { get; set; } = null!;
 	}

@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using VkIntern.API;
 using VkIntern.API.DbContexts;
+using VkIntern.API.Login;
 using VkIntern.API.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +15,9 @@ IMapper mapper = MappingConfig.RegisterMaps().CreateMapper();
 builder.Services.AddSingleton(mapper);
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+ILoginHandler loginHandler = new LoginHandler();
+builder.Services.AddSingleton(loginHandler);
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

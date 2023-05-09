@@ -12,6 +12,7 @@ using VkIntern.API.Models;
 using VkIntern.API.Repository;
 using Microsoft.AspNetCore.Mvc;
 using System.Data.Entity;
+using VkIntern.API.Login;
 
 namespace VkIntern.Tests
 {
@@ -101,7 +102,8 @@ namespace VkIntern.Tests
 			DbContext.SaveChanges();
 
 			IMapper mapper = MappingConfig.RegisterMaps().CreateMapper();
-			var userRepository = new UserRepository(mapper, DbContext);
+			ILoginHandler loginHandler = new LoginHandler();
+			var userRepository = new UserRepository(mapper, loginHandler, DbContext);
 			Controller = new UserAPIController(userRepository);
 		}
 
