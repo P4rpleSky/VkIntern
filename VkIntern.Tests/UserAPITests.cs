@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using VkIntern.API.Controllers;
+using VkIntern.API.Login;
 using VkIntern.API.Models;
 using VkIntern.API.Models.Dtos;
 
@@ -204,6 +206,7 @@ namespace VkIntern.Tests
 
 			for (int id = 1; id <= emulator.DbContext.Users.Count(); id++)
 			{
+				emulator = new ControllerEmulator();
 				var response = await emulator.Controller.Get(id);
 				var userSummaryDto = response.Result as UserSummaryDto;
 				Assert.NotNull(userSummaryDto);
@@ -245,6 +248,7 @@ namespace VkIntern.Tests
 			for (int i = 0; i < falseRange.Count; i++)
 			{
 				int id = falseRange[i];
+				emulator = new ControllerEmulator();
 				var response = await emulator.Controller.Get(id);
 				Assert.True(response.ErrorMessages.Any());
 				Assert.Null(response.Result);
@@ -263,6 +267,7 @@ namespace VkIntern.Tests
 			var blockedStateId = emulator.DbContext.UserStates.Where(x => x.Code == "Blocked").First().Id;
 			foreach (var id in idsToDelete)
 			{
+				emulator = new ControllerEmulator();
 				var responseOnDelete = await emulator.Controller.Delete(id);
 				var responseOnGet = await emulator.Controller.Get(id);
 
@@ -289,6 +294,7 @@ namespace VkIntern.Tests
 			for (int i = 0; i < falseRange.Count; i++)
 			{
 				int id = falseRange[i];
+				emulator = new ControllerEmulator();
 				var response = await emulator.Controller.Get(id);
 				Assert.True(response.ErrorMessages.Any());
 				Assert.Null(response.Result);
@@ -307,6 +313,7 @@ namespace VkIntern.Tests
 
 			foreach (var id in incorrectUserIdsList)
 			{
+				emulator = new ControllerEmulator();
 				var response = await emulator.Controller.Delete(id);
 				Assert.True(response.ErrorMessages.Any());
 				Assert.Null(response.Result);
@@ -331,7 +338,12 @@ namespace VkIntern.Tests
 				UserGroupCode = userGroupCode
 			};
 
+			Stopwatch stopWatch = new Stopwatch();
+			stopWatch.Start();	
 			var responseOnPost = await emulator.Controller.Post(expectedUserDto);
+			stopWatch.Stop();
+			Assert.True(stopWatch.Elapsed.TotalMilliseconds > 5000);
+
 			var actualUserDto = responseOnPost.Result as UserDto;
 			Assert.NotNull(actualUserDto);
 
@@ -507,6 +519,7 @@ namespace VkIntern.Tests
 
 			foreach (var userDto in incorrectUserDtoList)
 			{
+				emulator = new ControllerEmulator();
 				var response = await emulator.Controller.Post(userDto);
 				Assert.True(response.ErrorMessages.Any());
 				Assert.Null(response.Result);
@@ -516,7 +529,6 @@ namespace VkIntern.Tests
 		[Fact]
 		public async Task CreateUserFailsWhenAddingWithInvalidUserGroupCode()
 		{
-			var emulator = new ControllerEmulator();
 			var incorrectUserDtoList = new List<UserDto>();
 			for (int i = 0; i < 100; i++)
 			{
@@ -530,9 +542,55 @@ namespace VkIntern.Tests
 
 			foreach (var userDto in incorrectUserDtoList)
 			{
+				var emulator = new ControllerEmulator();
 				var response = await emulator.Controller.Post(userDto);
 				Assert.True(response.ErrorMessages.Any());
 				Assert.Null(response.Result);
+			}
+		}
+
+		[Fact]
+		public async Task CreateUserFailsWhenCreatingUserWithTheSameLoginInTheNext5sec()
+		{
+			for (int i = 0; i < 5; i++)
+			{
+				var login = Guid.NewGuid().ToString();
+				var firstUser = new UserDto
+				{
+					Login = login,
+					Password = Guid.NewGuid().ToString(),
+					UserGroupCode = "User"
+				};
+				var secondUser = new UserDto
+				{
+					Login = login,
+					Password = Guid.NewGuid().ToString(),
+					UserGroupCode = "User"
+				};
+
+				var loginHandler = new LoginHandler();
+				var emulator = new ControllerEmulator(loginHandler: loginHandler);
+				Stopwatch stopWatch = new Stopwatch();
+				stopWatch.Start();
+
+				var response1 = emulator.Controller.Post(firstUser);
+
+				Random rnd = new Random();
+				Thread.Sleep(rnd.Next(0, 5000));
+
+				emulator = new ControllerEmulator(loginHandler: loginHandler);
+				var response2 = emulator.Controller.Post(secondUser);
+
+				var firstResponse = await response1;
+				var secondResponse = await response2;
+
+				stopWatch.Stop();
+
+				Assert.True(stopWatch.Elapsed.TotalMilliseconds < 5000);
+				Assert.True(firstResponse.ErrorMessages.Any());
+				Assert.True(secondResponse.ErrorMessages.Any());
+				Assert.Null(firstResponse.Result);
+				Assert.Null(secondResponse.Result);
 			}
 		}
 	}

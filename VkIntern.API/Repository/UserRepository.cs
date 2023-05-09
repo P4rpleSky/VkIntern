@@ -70,7 +70,8 @@ namespace VkIntern.API.Repository
 				throw new TaskCanceledException(
 					$"Failed to create user with login {userDto.Login} because someone tried to do it too in the next 5 seconds!");
 			}
-
+			
+			_loginHandler.RemoveLogin(userDto.Login);
 			_db.Users.Add(user);
 			await _db.SaveChangesAsync();
 			return _mapper.Map<User, UserDto>(user);

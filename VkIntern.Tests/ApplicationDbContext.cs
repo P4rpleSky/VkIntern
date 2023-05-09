@@ -107,10 +107,88 @@ namespace VkIntern.Tests
 			Controller = new UserAPIController(userRepository);
 		}
 
-		//public void Dispose()
-		//{
-		//	DbContext.Database.EnsureDeleted();
-		//	DbContext.Dispose();
-		//}
+		public ControllerEmulator(ILoginHandler loginHandler, bool isFilledWithUsers = true)
+		{
+			var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+				.UseInMemoryDatabase(databaseName: "userdb_mock" + Guid.NewGuid())
+				.Options;
+
+			DbContext = new ApplicationDbContext(options);
+			if (isFilledWithUsers)
+			{
+				var users = new List<User>
+				{
+					new User
+					{
+						Id = 1,
+						Login = "admin",
+						Password = "admin123",
+						CreatedDate = DateOnly.FromDateTime(DateTime.UtcNow),
+						UserGroupId = 1,
+						UserStateId = 1
+					},
+					new User
+					{
+						Id = 2,
+						Login = "Alex",
+						Password = "332323",
+						CreatedDate = DateOnly.FromDateTime(DateTime.UtcNow),
+						UserGroupId = 2,
+						UserStateId = 1
+					},
+					new User
+					{
+						Id = 3,
+						Login = "Jon",
+						Password = "11231",
+						CreatedDate = DateOnly.FromDateTime(DateTime.UtcNow),
+						UserGroupId = 2,
+						UserStateId = 2
+					}
+				};
+
+				DbContext.Users.AddRange(users);
+			}
+
+			var userGroups = new List<UserGroup>
+			{
+				new UserGroup
+				{
+					Id = 1,
+					Code = "Admin",
+					Description = "Admin in fake db!"
+				},
+				new UserGroup
+				{
+					Id= 2,
+					Code = "User",
+					Description = "User in fake db!"
+				}
+			};
+
+			var userStates = new List<UserState>
+			{
+				new UserState
+				{
+					Id = 1,
+					Code = "Active",
+					Description = "This user is active in fake db!"
+				},
+				new UserState
+				{
+					Id= 2,
+					Code = "Blocked",
+					Description = "This user is blocked in fake db!"
+				}
+			};
+
+			DbContext.UserGroups.AddRange(userGroups);
+			DbContext.UserStates.AddRange(userStates);
+			DbContext.SaveChanges();
+
+			IMapper mapper = MappingConfig.RegisterMaps().CreateMapper();
+			var userRepository = new UserRepository(mapper, loginHandler, DbContext);
+			Controller = new UserAPIController(userRepository);
+		}
 	}
 }
