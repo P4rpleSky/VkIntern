@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VkIntern.API.Models.Dtos;
 using VkIntern.API.Repository;
 
 namespace VkIntern.API.Controllers
 {
+	[Authorize]
 	[Route("api/users")]
 	public class UserAPIController : Controller
 	{
